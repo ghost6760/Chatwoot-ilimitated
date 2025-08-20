@@ -34,19 +34,18 @@ RUN set -eux && \
         git \
         imagemagick \
         libpq-dev \
-        nodejs \
-        npm \
         postgresql-client \
         redis \
         tzdata \
-        yarn \
         python3 \
         make \
         g++ \
         libc6-compat \
         vips-dev \
         vips-tools \
-        shared-mime-info
+        shared-mime-info \
+        nodejs \
+        npm
 
 # Instalar Node.js específico y pnpm
 RUN curl -fsSL https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64-musl.tar.gz | \
@@ -54,6 +53,9 @@ RUN curl -fsSL https://unofficial-builds.nodejs.org/download/release/v${NODE_VER
 
 # Instalar pnpm globalmente
 RUN npm install -g pnpm@${PNPM_VERSION}
+
+# Instalar husky globalmente para evitar errores en prepare scripts
+RUN npm install -g husky
 
 # Crear directorio de gems
 RUN mkdir -p /gems
@@ -76,11 +78,16 @@ COPY package*.json yarn.lock* pnpm-lock.yaml* ./
 
 # Instalar dependencias de Node.js
 RUN if [ -f "pnpm-lock.yaml" ]; then \
-        pnpm install --frozen-lockfile --production; \
+        pnpm install --frozen-lockfile --prod --ignore-scripts; \
     elif [ -f "yarn.lock" ]; then \
-        yarn install --production --frozen-lockfile; \
+        yarn install --production --frozen-lockfile --ignore-scripts; \
     else \
-        npm ci --only=production; \
+        npm ci --only=production --ignore-scripts; \
+    fi
+
+# Ejecutar prepare scripts manualmente si es necesario (sin husky)
+RUN if [ -f "pnpm-lock.yaml" ]; then \
+        HUSKY=0 pnpm rebuild || true; \
     fi
 
 # Copiar el resto del código
@@ -101,5 +108,5 @@ USER nobody
 # Puerto que expone la aplicación
 EXPOSE 3000
 
-# Comando por defecto - ajustar según tu aplicación
+# Comando por defecto - Railway override esto con startCommand
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]
