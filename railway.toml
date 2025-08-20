@@ -1,0 +1,7 @@
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+[deploy]
+# Comando que se ejecuta UNA VEZ por deploy
+deployCommand = "bundle exec rails db:prepare && bundle exec rails db:seed"
+# Comando de inicio limpio
+startCommand = "bundle exec rails server -b 0.0.0.0 -p $PORT"
