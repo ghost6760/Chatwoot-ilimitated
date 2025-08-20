@@ -1,112 +1,65 @@
-# Dockerfile reconstruido basado en chatwoot/chatwoot:latest
-# Para repo privado con adaptaciones necesarias
+# Dockerfile simple sin docker-entrypoint.sh
+FROM ruby:3.4.4
 
-# Imagen base Ruby 3.4.4 sobre Alpine Linux
-FROM ruby:3.4.4-alpine
+# Variables de entorno de Railway
+ENV LANG=C.UTF-8 \
+    RUBY_VERSION=3.4.4 \
+    GEM_HOME=/usr/local/bundle \
+    BUNDLE_SILENCE_ROOT_WARNING=1 \
+    BUNDLE_APP_CONFIG=/usr/local/bundle \
+    NODE_VERSION=23.7.0 \
+    PNPM_VERSION=10.2.0 \
+    BUNDLE_WITHOUT=development:test \
+    BUNDLER_VERSION=2.5.11 \
+    EXECJS_RUNTIME=Disabled \
+    RAILS_SERVE_STATIC_FILES=true \
+    BUNDLE_FORCE_RUBY_PLATFORM=1 \
+    RAILS_ENV=production \
+    BUNDLE_PATH=/gems \
+    CW_EDITION=ce \
+    HUSKY=0
 
-# Variables de entorno base
-ENV LANG=C.UTF-8
-ENV RUBY_VERSION=3.4.4
-ENV NODE_VERSION=23.7.0
-ENV PNPM_VERSION=10.2.0
-ENV BUNDLER_VERSION=2.5.11
-
-# Variables de configuración Rails/Bundle
-ENV RAILS_ENV=production
-ENV BUNDLE_WITHOUT=development:test
-ENV BUNDLE_FORCE_RUBY_PLATFORM=1
-ENV BUNDLE_SILENCE_ROOT_WARNING=1
-ENV BUNDLE_APP_CONFIG=/usr/local/bundle
-ENV BUNDLE_PATH=/gems
-ENV GEM_HOME=/usr/local/bundle
-
-# Variables específicas de Chatwoot
-ENV RAILS_SERVE_STATIC_FILES=true
-ENV EXECJS_RUNTIME=Disabled
-ENV CW_EDITION=ee
+# Instalar Node.js y PNPM
+RUN curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz \
+    -o node.tar.xz \
+    && tar -xJf node.tar.xz -C /usr/local --strip-components=1 \
+    && rm node.tar.xz \
+    && npm install -g pnpm@${PNPM_VERSION}
 
 # Instalar dependencias del sistema
-RUN set -eux && \
-    apk add --no-cache \
-        bash \
-        build-base \
-        curl \
-        git \
-        imagemagick \
-        libpq-dev \
-        postgresql-client \
-        redis \
-        tzdata \
-        python3 \
-        make \
-        g++ \
-        libc6-compat \
-        vips-dev \
-        vips-tools \
-        shared-mime-info \
-        nodejs \
-        npm
+RUN apt-get update && apt-get install -y \
+    build-essential curl git \
+    libpq-dev libxml2-dev libxslt1-dev \
+    libmagickwand-dev imagemagick \
+    libffi-dev libyaml-dev libssl-dev zlib1g-dev \
+    libreadline-dev libsqlite3-dev wget tzdata \
+    postgresql-client redis-tools \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instalar Node.js específico y pnpm
-RUN curl -fsSL https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64-musl.tar.gz | \
-    tar -xz -C /usr/local --strip-components=1
+# Instalar Bundler
+RUN gem install bundler -v ${BUNDLER_VERSION}
 
-# Instalar pnpm globalmente
-RUN npm install -g pnpm@${PNPM_VERSION}
-
-# Instalar husky globalmente para evitar errores en prepare scripts
-RUN npm install -g husky
-
-# Crear directorio de gems
-RUN mkdir -p /gems
-ENV BUNDLE_PATH=/gems
-
-# Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar Gemfile primero para cache de Docker layers
-COPY Gemfile* ./
+# Copiar archivos de dependencias
+COPY Gemfile Gemfile.lock package.json pnpm-lock.yaml ./
 
-# Instalar bundler y gems
-RUN gem install bundler -v ${BUNDLER_VERSION} && \
-    bundle config set --local deployment 'true' && \
-    bundle config set --local without 'development test' && \
-    bundle install --jobs 4 --retry 3
+# Instalar dependencias
+RUN bundle config set --local deployment 'true' \
+    && bundle config set --local without ${BUNDLE_WITHOUT} \
+    && bundle install --jobs 4 --retry 3 \
+    && pnpm install --frozen-lockfile --prod --ignore-scripts
 
-# Copiar package.json y yarn.lock/pnpm-lock.yaml si existen
-COPY package*.json yarn.lock* pnpm-lock.yaml* ./
-
-# Instalar dependencias de Node.js
-RUN if [ -f "pnpm-lock.yaml" ]; then \
-        pnpm install --frozen-lockfile --prod --ignore-scripts; \
-    elif [ -f "yarn.lock" ]; then \
-        yarn install --production --frozen-lockfile --ignore-scripts; \
-    else \
-        npm ci --only=production --ignore-scripts; \
-    fi
-
-# Ejecutar prepare scripts manualmente si es necesario (sin husky)
-RUN if [ -f "pnpm-lock.yaml" ]; then \
-        HUSKY=0 pnpm rebuild || true; \
-    fi
-
-# Copiar el resto del código
+# Copiar código fuente
 COPY . .
 
-# Compilar assets si es necesario
-RUN if [ -f "config/application.rb" ]; then \
-        SECRET_KEY_BASE=dummy bundle exec rails assets:precompile || true; \
-    fi
+# Precompilar assets
+RUN SECRET_KEY_BASE=dummy_for_precompile \
+    DATABASE_URL=postgresql://dummy:dummy@localhost/dummy \
+    REDIS_URL=redis://localhost:6379/0 \
+    bundle exec rails assets:precompile
 
-# Crear archivo .git_sha si no existe (Railway lo usa para tracking)
-RUN echo "$(git rev-parse HEAD 2>/dev/null || echo 'unknown')" > .git_sha 2>/dev/null || echo 'local-build' > .git_sha
-
-# Configurar permisos
-RUN chown -R nobody:nogroup /app /gems
-USER nobody
-
-# Puerto que expone la aplicación
 EXPOSE 3000
 
-# Comando por defecto - Railway override esto con startCommand
-CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]
+# Comando de inicio directo (sin script separado)
+CMD ["sh", "-c", "bundle exec rails db:create db:migrate && bundle exec rails db:seed && bundle exec rails server -b 0.0.0.0 -p $PORT"]
