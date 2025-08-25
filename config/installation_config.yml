@@ -85,7 +85,6 @@
   description: 'Enable direct uploads to cloud storage'
   locked: false
 # ------- End of Account Related Config ------- #
-
 # ------- Email Related Config ------- #
 - name: MAILER_INBOUND_EMAIL_DOMAIN
   display_title: 'Inbound Email Domain'
