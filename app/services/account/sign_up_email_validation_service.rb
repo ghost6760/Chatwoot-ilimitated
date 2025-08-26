@@ -24,7 +24,7 @@ class Account::SignUpEmailValidationService
 
   def domain_blocked?
     domain = email.split('@').last&.downcase
-    
+
     # Lista de dominios que siempre están permitidos
     allowed_domains = [
       'gmail.com', 
