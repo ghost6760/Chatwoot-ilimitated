@@ -24,6 +24,21 @@ class Account::SignUpEmailValidationService
 
   def domain_blocked?
     domain = email.split('@').last&.downcase
+    
+    # Lista de dominios que siempre están permitidos
+    allowed_domains = [
+      'gmail.com', 
+      'hotmail.com', 
+      'outlook.com', 
+      'live.com',
+      'yahoo.com',
+      'icloud.com'
+    ]
+    
+    # Si el dominio está en la lista permitida, no está bloqueado
+    return false if allowed_domains.include?(domain)
+    
+    # Para otros dominios, aplicar la lógica original de bloqueo
     blocked_domains.any? { |blocked_domain| domain.match?(blocked_domain.downcase) }
   end
 
@@ -31,6 +46,18 @@ class Account::SignUpEmailValidationService
     domains = GlobalConfigService.load('BLOCKED_EMAIL_DOMAINS', '')
     return [] if domains.blank?
 
-    domains.split("\n").map(&:strip)
+    all_blocked = domains.split("\n").map(&:strip)
+    
+    # Remover dominios permitidos de la lista de bloqueados
+    allowed_domains = [
+      'gmail.com', 
+      'hotmail.com', 
+      'outlook.com', 
+      'live.com',
+      'yahoo.com',
+      'icloud.com'
+    ]
+    
+    all_blocked.reject { |domain| allowed_domains.include?(domain.downcase) }
   end
 end
