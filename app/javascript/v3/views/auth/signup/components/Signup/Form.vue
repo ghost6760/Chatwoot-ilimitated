@@ -10,7 +10,7 @@ import NextButton from 'dashboard/components-next/button/Button.vue';
 import { isValidPassword } from 'shared/helpers/Validators';
 import GoogleOAuthButton from '../../../../../components/GoogleOauth/Button.vue';
 import { register } from '../../../../../api/auth';
-import * as CompanyEmailValidator from 'company-email-validator';
+// ❌ REMOVIDA: import * as CompanyEmailValidator from 'company-email-validator';
 
 export default {
   components: {
@@ -50,9 +50,7 @@ export default {
         email: {
           required,
           email,
-          businessEmailValidator(value) {
-            return CompanyEmailValidator.isCompanyEmail(value);
-          },
+          // ❌ REMOVIDA: businessEmailValidator
         },
         password: {
           required,
