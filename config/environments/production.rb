@@ -104,13 +104,25 @@ Rails.application.configure do
 
   Rails.application.routes.default_url_options = { host: ENV['FRONTEND_URL'] }
 
-  # SMTP Configuration for ActionMailer
+  # SMTP Configuration for ActionMailer - DEBUG VERSION
+  puts "=== SMTP CONFIGURATION DEBUG ==="
+  puts "SMTP_USERNAME: '#{ENV['SMTP_USERNAME']}'"
+  puts "SMTP_USERNAME present?: #{ENV['SMTP_USERNAME'].present?}"
+  puts "SMTP_PASSWORD present?: #{ENV['SMTP_PASSWORD'].present?}"
+  puts "SMTP_HOST: '#{ENV['SMTP_HOST']}'"
+  puts "SMTP_PORT: '#{ENV['SMTP_PORT']}'"
+  puts "SMTP_DOMAIN: '#{ENV['SMTP_DOMAIN']}'"
+  puts "================================="
+
   if ENV['SMTP_USERNAME'].present?
+    puts "✓ SMTP_USERNAME presente - Configurando SMTP..."
+    
     config.action_mailer.delivery_method = :smtp
     config.action_mailer.perform_deliveries = true
     config.action_mailer.raise_delivery_errors = true
+    config.action_mailer.default_url_options = { host: ENV['FRONTEND_URL'] }
 
-    config.action_mailer.smtp_settings = {
+    smtp_settings = {
       address: ENV.fetch('SMTP_HOST', 'smtp.gmail.com'),
       port: ENV.fetch('SMTP_PORT', 587).to_i,
       domain: ENV.fetch('SMTP_DOMAIN', 'gmail.com'),
@@ -119,9 +131,18 @@ Rails.application.configure do
       authentication: 'plain',
       enable_starttls_auto: true
     }
+
+    config.action_mailer.smtp_settings = smtp_settings
+    
+    puts "✓ SMTP configurado con delivery_method: :smtp"
+    puts "✓ SMTP settings: #{smtp_settings.inspect}"
   else
+    puts "✗ SMTP_USERNAME NO presente - Usando delivery method: test"
     # Fallback configuration when SMTP variables are not set
     config.action_mailer.delivery_method = :test
     config.action_mailer.perform_deliveries = false
   end
+  
+  puts "Final delivery_method: #{config.action_mailer.delivery_method}"
+  puts "=== FIN SMTP DEBUG ==="
 end
