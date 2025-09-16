@@ -16,13 +16,15 @@ class Account::SignUpEmailValidationService
       return true
     end
 
-    # Lógica original
+    # Lógica modificada para permitir todos los correos válidos
     address = ValidEmail2::Address.new(email)
 
     raise InvalidEmail.new({ valid: false, disposable: nil }) unless address.valid?
 
-    raise InvalidEmail.new({ domain_blocked: true }) if domain_blocked?
+    # Comentamos la validación de dominio bloqueado para permitir todos los dominios
+    # raise InvalidEmail.new({ domain_blocked: true }) if domain_blocked?
 
+    # Solo bloquear emails temporales/desechables pero permitir Gmail, Outlook, etc.
     raise InvalidEmail.new({ valid: true, disposable: true }) if address.disposable?
 
     true
@@ -31,22 +33,27 @@ class Account::SignUpEmailValidationService
   private
 
   def domain_blocked?
-    domain = email.split('@').last&.downcase
+    # Modificado: Siempre retorna false para permitir todos los dominios
+    # Mantenemos el método para no romper dependencias
+    false
     
-    # Lista de dominios que siempre están permitidos
-    allowed_domains = [
-      'gmail.com', 
-      'hotmail.com', 
-      'outlook.com', 
-      'live.com',
-      'yahoo.com',
-      'icloud.com'
-    ]
-    
-    # Si el dominio está en la lista permitida, no está bloqueado
-    return false if allowed_domains.include?(domain)
-    
-    blocked_domains.any? { |blocked_domain| domain.match?(blocked_domain.downcase) }
+    # Código original comentado:
+    # domain = email.split('@').last&.downcase
+    # 
+    # # Lista de dominios que siempre están permitidos
+    # allowed_domains = [
+    #   'gmail.com', 
+    #   'hotmail.com', 
+    #   'outlook.com', 
+    #   'live.com',
+    #   'yahoo.com',
+    #   'icloud.com'
+    # ]
+    # 
+    # # Si el dominio está en la lista permitida, no está bloqueado
+    # return false if allowed_domains.include?(domain)
+    # 
+    # blocked_domains.any? { |blocked_domain| domain.match?(blocked_domain.downcase) }
   end
 
   def blocked_domains
