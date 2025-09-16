@@ -53,12 +53,12 @@ class DeviseOverrides::OmniauthCallbacksController < DeviseTokenAuth::OmniauthCa
     ).first
   end
 
-  def validate_signup_email_is_business_domain?
+  "def validate_signup_email_is_business_domain?
     # return true if the user is a business account, false if it is a blocked domain account
     Account::SignUpEmailValidationService.new(auth_hash['info']['email']).perform
   rescue CustomExceptions::Account::InvalidEmail
     false
-  end
+  end"
 
   def create_account_for_user
     @resource, @account = AccountBuilder.new(
