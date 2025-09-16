@@ -62,6 +62,7 @@ RUN echo "=== BUNDLE INFO acts-as-taggable-on ===" \
 COPY . .
 
 # precompile assets
+RUN rm -rf tmp/cache/* public/assets/* node_modules/.cache node_modules/.vite
 RUN SECRET_KEY_BASE=dummy_for_precompile \
     DATABASE_URL=postgresql://dummy:dummy@localhost/dummy \
     REDIS_URL=redis://localhost:6379/0 \
