@@ -54,10 +54,18 @@ class DeviseOverrides::OmniauthCallbacksController < DeviseTokenAuth::OmniauthCa
   end
 
   def validate_signup_email_is_business_domain?
-    # return true if the user is a business account, false if it is a blocked domain account
-    Account::SignUpEmailValidationService.new(auth_hash['info']['email']).perform
-  rescue CustomExceptions::Account::InvalidEmail
-    false
+    # Modificado: Validar solo formato básico del email, permitir todos los dominios
+    begin
+      address = ValidEmail2::Address.new(auth_hash['info']['email'])
+      return address.valid? && !address.disposable?
+    rescue StandardError
+      return false
+    end
+    
+    # Código original comentado que usaba Account::SignUpEmailValidationService:
+    # Account::SignUpEmailValidationService.new(auth_hash['info']['email']).perform
+    # rescue CustomExceptions::Account::InvalidEmail
+    #   false
   end
 
   def create_account_for_user
