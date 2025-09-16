@@ -15,20 +15,28 @@ if Rails.env.production?
     ActionMailer::Base.perform_deliveries = true
     ActionMailer::Base.raise_delivery_errors = true
     
+    # Determinar si usar SSL o TLS
+    use_ssl = ENV.fetch('SMTP_USE_SSL', 'false') == 'true'
+    port = ENV.fetch('SMTP_PORT', use_ssl ? 465 : 587).to_i
+    
     ActionMailer::Base.smtp_settings = {
       address: ENV.fetch('SMTP_HOST', 'smtp.gmail.com'),
-      port: ENV.fetch('SMTP_PORT', 587).to_i,
+      port: port,
       domain: ENV.fetch('SMTP_DOMAIN', 'gmail.com'),
       user_name: ENV.fetch('SMTP_USERNAME'),
       password: ENV.fetch('SMTP_PASSWORD'),
       authentication: :plain,
-      enable_starttls_auto: true,
-      openssl_verify_mode: 'none'
+      enable_starttls_auto: !use_ssl,
+      tls: use_ssl,
+      openssl_verify_mode: 'none',
+      open_timeout: 30,
+      read_timeout: 30
     }
     
     puts "✓ SMTP configurado en inicializador:"
     puts "  delivery_method: #{ActionMailer::Base.delivery_method}"
     puts "  smtp_settings: #{ActionMailer::Base.smtp_settings}"
+    puts "  Puerto: #{port}, SSL: #{use_ssl}"
     
     # Verificar la configuración después de configurarla
     Rails.application.config.after_initialize do
