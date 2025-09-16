@@ -105,23 +105,17 @@ Rails.application.configure do
   Rails.application.routes.default_url_options = { host: ENV['FRONTEND_URL'] }
 
   # SMTP Configuration for ActionMailer
-  if ENV['SMTP_USERNAME'].present?
-    config.action_mailer.delivery_method = :smtp
-    config.action_mailer.perform_deliveries = true
-    config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.raise_delivery_errors = true
 
-    config.action_mailer.smtp_settings = {
-      address: ENV.fetch('SMTP_HOST', 'smtp.gmail.com'),
-      port: ENV.fetch('SMTP_PORT', 587).to_i,
-      domain: ENV.fetch('SMTP_DOMAIN', 'gmail.com'),
-      user_name: ENV.fetch('SMTP_USERNAME'),
-      password: ENV.fetch('SMTP_PASSWORD'),
-      authentication: 'plain',
-      enable_starttls_auto: true
-    }
-  else
-    # Fallback configuration when SMTP variables are not set
-    config.action_mailer.delivery_method = :test
-    config.action_mailer.perform_deliveries = false
-  end
+  config.action_mailer.smtp_settings = {
+    address: ENV.fetch('SMTP_HOST', 'smtp.gmail.com'),
+    port: ENV.fetch('SMTP_PORT', 587).to_i,
+    domain: ENV.fetch('SMTP_DOMAIN', 'gmail.com'),
+    user_name: ENV.fetch('SMTP_USERNAME'),
+    password: ENV.fetch('SMTP_PASSWORD'),
+    authentication: 'plain',
+    enable_starttls_auto: true
+  }
 end
