@@ -103,7 +103,4 @@ Rails.application.configure do
   config.action_mailbox.ingress = ENV.fetch('RAILS_INBOUND_EMAIL_SERVICE', 'relay').to_sym
 
   Rails.application.routes.default_url_options = { host: ENV['FRONTEND_URL'] }
-
-  # SMTP Configuration será manejada por config/initializers/smtp.rb
-  # para asegurar que se aplique correctamente en todos los procesos
 end
