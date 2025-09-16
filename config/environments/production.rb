@@ -104,17 +104,8 @@ Rails.application.configure do
 
   Rails.application.routes.default_url_options = { host: ENV['FRONTEND_URL'] }
 
-  # Debug: Verificar variables SMTP
-  Rails.logger.info "=== SMTP DEBUG ==="
-  Rails.logger.info "SMTP_USERNAME present: #{ENV['SMTP_USERNAME'].present?}"
-  Rails.logger.info "SMTP_USERNAME value: #{ENV['SMTP_USERNAME']}" if ENV['SMTP_USERNAME'].present?
-  Rails.logger.info "SMTP_HOST: #{ENV['SMTP_HOST']}"
-  Rails.logger.info "SMTP_PORT: #{ENV['SMTP_PORT']}"
-  Rails.logger.info "All SMTP ENV keys: #{ENV.keys.select { |k| k.include?('SMTP') }}"
-
   # SMTP Configuration for ActionMailer
   if ENV['SMTP_USERNAME'].present?
-    Rails.logger.info "=== USING SMTP CONFIGURATION ==="
     config.action_mailer.delivery_method = :smtp
     config.action_mailer.perform_deliveries = true
     config.action_mailer.raise_delivery_errors = true
@@ -128,10 +119,8 @@ Rails.application.configure do
       authentication: 'plain',
       enable_starttls_auto: true
     }
-    
-    Rails.logger.info "SMTP settings configured: #{config.action_mailer.smtp_settings}"
   else
-    Rails.logger.info "=== SMTP_USERNAME NOT FOUND, USING FALLBACK ==="
+    # Fallback configuration when SMTP variables are not set
     config.action_mailer.delivery_method = :test
     config.action_mailer.perform_deliveries = false
   end
