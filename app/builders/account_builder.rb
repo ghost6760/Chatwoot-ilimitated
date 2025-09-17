@@ -64,20 +64,14 @@ class AccountBuilder
       role: AccountUser.roles['administrator']
     )
   end
-  
+
   def create_user
     @user = User.new(email: @email,
                      password: user_password,
                      password_confirmation: user_password,
                      name: user_full_name)
     @user.type = 'SuperAdmin' if @super_admin
-    
-    # ✅ NUEVA LÍNEA: Confirmar automáticamente TODOS los usuarios
-    @user.confirm
-    
-    # ❌ REMOVER esta línea condicional:
-    # @user.confirm if @confirmed
-    
+    @user.confirm if @confirmed
     @user.save!
   end
 end
