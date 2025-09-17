@@ -70,4 +70,5 @@ RUN SECRET_KEY_BASE=dummy_for_precompile \
 
 EXPOSE 3000
 
+
 CMD ["sh", "-c", "bundle exec rails db:create db:migrate && bundle exec rails db:seed && (bundle exec sidekiq -C config/sidekiq.yml &) && bundle exec rails server -b 0.0.0.0 -p $PORT"]
