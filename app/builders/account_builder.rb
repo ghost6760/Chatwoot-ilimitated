@@ -71,7 +71,13 @@ class AccountBuilder
                      password_confirmation: user_password,
                      name: user_full_name)
     @user.type = 'SuperAdmin' if @super_admin
-    @user.confirm if @confirmed
+    
+    # ✅ NUEVA LÍNEA: Confirmar automáticamente TODOS los usuarios
+    @user.confirm
+    
+    # ❌ REMOVER esta línea condicional:
+    # @user.confirm if @confirmed
+    
     @user.save!
   end
 end
